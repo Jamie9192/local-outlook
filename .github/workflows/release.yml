@@ -43,7 +43,6 @@ jobs:
       contents: write
     strategy:
       fail-fast: false
-      max-parallel: 1 # Serialize manifest uploads so each platform is retained.
       matrix:
         include:
           - os: macos-latest
@@ -81,6 +80,7 @@ jobs:
           releaseId: ${{ needs.prepare.outputs.id }}
           tagName: ${{ needs.prepare.outputs.tag }}
           releaseDraft: true
+          uploadUpdaterJson: false
           updaterJsonPreferNsis: true
           args: ${{ matrix.args }}
   publish:
@@ -89,6 +89,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
       - name: Publish completed release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,6 +100,8 @@ jobs:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
         shell: bash
         run: |
-          gh release download "$RELEASE_TAG" --pattern latest.json --dir .
-          python3 -c 'import json; d=json.load(open("latest.json")); assert all(k in d["platforms"] for k in ["darwin-aarch64","darwin-x86_64","windows-x86_64"]); assert all(p.get("signature") and p.get("url","").startswith("https://") for p in d["platforms"].values())'
+          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > release.json
+          gh release download "$RELEASE_TAG" --pattern '*.sig' --dir signatures
+          node scripts/create-update-manifest.mjs release.json signatures > latest.json
+          gh release upload "$RELEASE_TAG" latest.json --clobber
           gh release edit "$RELEASE_TAG" --draft=false --latest
