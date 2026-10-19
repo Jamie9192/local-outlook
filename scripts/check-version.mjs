@@ -1,0 +1,14 @@
+import { readFileSync } from 'node:fs';
+import assert from 'node:assert/strict';
+const readJson=path=>JSON.parse(readFileSync(path,'utf8'));
+const version=readJson('package.json').version;
+assert.match(version,/^\d+\.\d+\.\d+$/,'Use a three-part release version');
+assert.equal(readJson('package-lock.json').version,version);
+assert.equal(readJson('package-lock.json').packages[''].version,version);
+assert.equal(readJson('src-tauri/tauri.conf.json').version,version);
+const cargo=/^version = "([^"]+)"$/m.exec(readFileSync('src-tauri/Cargo.toml','utf8'));
+assert.equal(cargo?.[1],version);
+const lock=/name = "local-outlook"\nversion = "([^"]+)"/.exec(readFileSync('src-tauri/Cargo.lock','utf8'));
+assert.equal(lock?.[1],version);
+if(process.env.RELEASE_TAG)assert.equal(process.env.RELEASE_TAG,`v${version}`,'Tag must match the application version');
+console.log(`Release version ${version} is consistent.`);

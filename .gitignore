@@ -1,0 +1,21 @@
+node_modules/
+dist/
+src-tauri/target/
+.DS_Store
+.impeccable/
+test-results/
+*.log
+.env*
+
+# Local planning, credentials, build outputs and user data
+PRODUCT.md
+release-artifacts/
+target/
+src-tauri/gen/
+*.key
+*.pem
+*.p12
+*.p8
+*.db
+*.db-*
+*.sqlite*

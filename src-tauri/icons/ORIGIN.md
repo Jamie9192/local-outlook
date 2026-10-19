@@ -1,0 +1,1 @@
+All application icons are rasterised from ../icon.svg, an original geometric Local Outlook mark created for this project. Tauri CLI `tauri icon src-tauri/icon.svg` generated the PNG, ICO and ICNS variants. No generated photographs or third-party artwork are used.
