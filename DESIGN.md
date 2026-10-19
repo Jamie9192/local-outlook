@@ -293,6 +293,10 @@ The temporary detail surface uses the `calendar-popup` tokens and the calendar-p
 
 A named, non-modal dialog contains a wrapping heading, a close button, category label, labelled date/source metadata, description, and a source link where available. Day-list popups put matching weather first and open individual evidence in the same panel. Opening focuses the close button; the trigger remains the point of return on Escape or close. The popup follows scroll and resize, and dismisses if its anchor leaves view.
 
+### App updates
+
+App updates uses the existing white Settings section, compact secondary check action, teal install/restart actions, and inline status text. Release notes open in a disclosure as literal, scrollable text. Download progress is determinate when the total is known and indeterminate otherwise. Checking, installing, and restarting temporarily disable source requests and settings changes while cached browsing remains available; Overview shows a status message with a “View update” action. Unsaved settings or active source work block updating. Installation and restart each require an explicit action, with retry and quit/reopen recovery explained inline.
+
 ## Do's and Don'ts
 
 ### Do:
