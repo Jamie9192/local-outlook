@@ -15,6 +15,7 @@ test('a completed update feed maps both Mac architectures and refuses partial or
   const run=data=>{writeFileSync(path,JSON.stringify(data));return spawnSync(process.execPath,[resolve('scripts/create-update-manifest.mjs'),path,dir],{encoding:'utf8'});};
   const success=run(release);assert.equal(success.status,0,success.stderr);
   const manifest=JSON.parse(success.stdout);assert.equal(manifest.version,'1.2.3');assert.deepEqual(manifest.platforms['darwin-aarch64'],manifest.platforms['darwin-x86_64']);assert.ok(manifest.platforms['windows-x86_64'].signature);
+  const draft=run({...release,assets:release.assets.map(a=>({...a,browser_download_url:a.browser_download_url.replace('/download/v1.2.3/','/download/untagged-abc123/')}))});assert.equal(draft.status,0,draft.stderr);assert.ok(Object.values(JSON.parse(draft.stdout).platforms).every(p=>p.url.includes('/download/v1.2.3/')));
   assert.notEqual(run({...release,assets:release.assets.filter(a=>!a.name.endsWith('.exe.sig'))}).status,0);
   assert.notEqual(run({...release,assets:release.assets.map(a=>({...a,browser_download_url:a.browser_download_url.replace('/download/v1.2.3/','/latest/download/')}))}).status,0);
  }finally{rmSync(dir,{recursive:true,force:true});}

@@ -15,6 +15,11 @@ signing secret. `src-tauri/tauri.release.conf.json` enables signed updater artif
    latest.json covers both Mac architectures and Windows, then publishes it.
    A failed platform build leaves the draft unpublished for inspection or retry.
 
+If both builds passed but the final publication step failed, fix the publishing
+code and run the release workflow manually with `publish_only` enabled. This
+checks the application files against the version tag and requires every installer
+and signature before it publishes. It reuses the completed draft's packages.
+
 Published releases are retained so existing update URLs and signatures keep
 working. Old local installer copies can be moved to the Bin independently.
 Do not replace the files of a published version; issue a higher version instead.

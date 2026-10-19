@@ -14,7 +14,13 @@ function entry(suffix){
  assert.match(signature,/^[A-Za-z0-9+/]+={0,2}$/,'Invalid signature encoding');
  const url=new URL(asset.browser_download_url);
  assert.equal(url.protocol,'https:');assert.equal(url.hostname,'github.com');
- assert.ok(url.pathname.includes(`/releases/download/${release.tag_name}/`),'Use version-specific download URLs');
+ const parts=url.pathname.split('/');
+ assert.equal(parts[3],'releases');assert.equal(parts[4],'download');
+ assert.ok(parts[5]===release.tag_name||/^untagged-[a-z0-9]+$/.test(parts[5]),'Unexpected release download URL');
+ assert.equal(decodeURIComponent(parts.slice(6).join('/')),asset.name);
+ // Draft URLs contain a temporary tag. Publish the final, version-specific URL.
+ url.pathname=`/${parts[1]}/${parts[2]}/releases/download/${encodeURIComponent(release.tag_name)}/${encodeURIComponent(asset.name)}`;
+ url.search='';url.hash='';
  return {url:url.href,signature};
 }
 const mac=entry('.app.tar.gz'),windows=entry('.exe');

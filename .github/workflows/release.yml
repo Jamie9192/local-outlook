@@ -3,6 +3,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      publish_only:
+        description: 'Publish an already-built draft after fixing a publishing failure'
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -35,10 +40,21 @@ jobs:
             gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --title "Local Outlook $version — family preview" --notes-file docs/release-notes.md
           fi
           test "$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft)" = true
+          release_api=$(gh release view "$RELEASE_TAG" --json apiUrl --jq .apiUrl)
+          release_id="${release_api##*/}"
+          [[ "$release_id" =~ ^[0-9]+$ ]]
           echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
-          echo "id=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" --jq .id)" >> "$GITHUB_OUTPUT"
+          echo "id=$release_id" >> "$GITHUB_OUTPUT"
+      - name: Confirm the built application's source is unchanged
+        if: inputs.publish_only
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          git fetch --depth=1 origin tag "$RELEASE_TAG"
+          git diff --exit-code "$RELEASE_TAG" -- src src-tauri package.json package-lock.json LICENSE THIRD_PARTY_NOTICES.txt
   build:
     needs: prepare
+    if: ${{ !inputs.publish_only }}
     permissions:
       contents: write
     strategy:
@@ -85,6 +101,7 @@ jobs:
           args: ${{ matrix.args }}
   publish:
     needs: [prepare, build]
+    if: ${{ always() && needs.prepare.result == 'success' && (needs.build.result == 'success' || inputs.publish_only) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -98,9 +115,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_ID: ${{ needs.prepare.outputs.id }}
         shell: bash
         run: |
-          gh api "repos/$GH_REPO/releases/tags/$RELEASE_TAG" > release.json
+          gh api "repos/$GH_REPO/releases/$RELEASE_ID" > release.json
           gh release download "$RELEASE_TAG" --pattern '*.sig' --dir signatures
           node scripts/create-update-manifest.mjs release.json signatures > latest.json
           gh release upload "$RELEASE_TAG" latest.json --clobber
