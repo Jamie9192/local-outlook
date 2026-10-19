@@ -8,7 +8,7 @@ assert.equal(readJson('package-lock.json').packages[''].version,version);
 assert.equal(readJson('src-tauri/tauri.conf.json').version,version);
 const cargo=/^version = "([^"]+)"$/m.exec(readFileSync('src-tauri/Cargo.toml','utf8'));
 assert.equal(cargo?.[1],version);
-const lock=/name = "local-outlook"\nversion = "([^"]+)"/.exec(readFileSync('src-tauri/Cargo.lock','utf8'));
+const lock=/name = "local-outlook"\r?\nversion = "([^"]+)"/.exec(readFileSync('src-tauri/Cargo.lock','utf8'));
 assert.equal(lock?.[1],version);
 if(process.env.RELEASE_TAG)assert.equal(process.env.RELEASE_TAG,`v${version}`,'Tag must match the application version');
 console.log(`Release version ${version} is consistent.`);
